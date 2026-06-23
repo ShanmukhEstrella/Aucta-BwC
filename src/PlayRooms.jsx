@@ -608,18 +608,18 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}
           </button>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          {elapsed && <span className="inline-flex items-center rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold tabular-nums text-ink">Elapsed {elapsed}</span>}
-          <button onClick={toggleSound} title={soundOn ? "Turn sound off" : "Turn sound on"} className={"inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold hover:text-ink " + (soundOn ? "text-gold" : "text-muted")}>
-            {soundOn ? <Volume2 className="h-4 w-4 shrink-0" /> : <VolumeX className="h-4 w-4 shrink-0" />}
-            <span className="hidden sm:inline">{soundOn ? "Sound on" : "Sound off"}</span>
+        <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
+          {elapsed && <span className="inline-flex items-center rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold tabular-nums text-ink">Elapsed <span className="sm:hidden ml-1">{elapsed}</span><span className="hidden sm:inline ml-1.5">{elapsed}</span></span>}
+          <button onClick={toggleSound} title={soundOn ? "Turn sound off" : "Turn sound on"} className={"inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold hover:text-ink " + (soundOn ? "text-gold" : "text-muted")}>
+            {soundOn ? <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> : <VolumeX className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />}
+            <span className="hidden sm:inline">{soundOn ? "Sound on" : "Sound off"}</span><span className="sm:hidden">{soundOn ? "On" : "Off"}</span>
           </button>
-          {me_m && <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold text-white whitespace-nowrap" style={{ background: franchiseColor(me_m.team_name) }}><Wallet className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">{fmtCr(me_m.purse_remaining)}</span><span className="sm:hidden text-[11px]">{fmtCr(me_m.purse_remaining).slice(0, 4)}</span></span>}
-          <button onClick={() => setVideoEnabled((on) => !on)} className={"inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold hover:text-ink " + (videoEnabled ? "text-gold" : "text-muted")}>
-            <Video className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">{videoEnabled ? "Video on" : "Video"}</span>
+          {me_m && <span className="inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold text-white whitespace-nowrap" style={{ background: franchiseColor(me_m.team_name) }}><Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="hidden sm:inline">{fmtCr(me_m.purse_remaining)}</span><span className="sm:hidden text-[10px]">{fmtCr(me_m.purse_remaining).slice(0, 3)}</span></span>}
+          <button disabled title="Video coming soon" className="inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold text-muted opacity-50 cursor-not-allowed">
+            <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="hidden sm:inline">Video</span><span className="sm:hidden">V</span>
           </button>
-          {isHost && room.status !== "done" && <button onClick={async () => { const { error } = await requestEndRoom(roomId); if (error) flash("err", error.message); }} className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-rose-300/70 px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold text-rose-600 hover:bg-rose-50 whitespace-nowrap"><StopCircle className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">End</span></button>}
-          <button onClick={onLeave} className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-muted hover:text-ink"><LogOut className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Leave</span></button>
+          {isHost && room.status !== "done" && <button onClick={async () => { const { error } = await requestEndRoom(roomId); if (error) flash("err", error.message); }} className="inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full border border-rose-300/70 px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold text-rose-600 hover:bg-rose-50 whitespace-nowrap"><StopCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="hidden sm:inline">End</span></button>}
+          <button onClick={onLeave} className="inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm text-muted hover:text-ink"><LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="hidden sm:inline">Leave</span></button>
         </div>
       </div>
       {hasEndRequest && (
