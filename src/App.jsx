@@ -306,7 +306,7 @@ export default function App() {
           onToggleTheme={toggleTheme} onExit={() => setAdminMode(false)} onSignOut={signOut}
           onApprove={approve} onReject={reject} onReturn={returnToReview} onMove={moveItem}
           onStatus={setStatus} onCreate={createAuction} onReschedule={reschedule} onDelete={del} onDeleteAll={delAll} />
-      ) : (
+      ) : isAdmin ? (
         <Storefront me={me} profile={profile} listings={listings} auctions={auctions} notifs={notifs}
           watchSet={watchSet} joinedSet={joinedSet} bidSet={bidSet}
           now={now} theme={theme} ready={ready} isAdmin={isAdmin}
@@ -315,6 +315,8 @@ export default function App() {
           onSignIn={signIn} onSignOut={signOut}
           onSell={() => (me ? setSellOpen(true) : signIn())}
           onJoin={join} onBid={bid} onToggleWatch={toggleWatch} onDismiss={dismiss} onDismissAll={dismissAll} />
+      ) : (
+        <ComingSoon theme={theme} onToggleTheme={toggleTheme} onSignIn={signIn} onSignOut={signOut} me={me} />
       )}
 
       {me && profile && !profile.onboarded && (
@@ -475,6 +477,63 @@ function HowItWorks({ defaultOpen = false }) {
         </div>
       )}
     </section>
+  );
+}
+
+function ComingSoon({ theme, onToggleTheme, onSignIn, onSignOut, me }) {
+  const myName = me ? who(me.email) : "";
+  return (
+    <>
+      <style>{`
+        @keyframes blur-pulse {
+          0%, 100% { filter: blur(8px); opacity: 0.6; }
+          50% { filter: blur(12px); opacity: 0.7; }
+        }
+        .coming-soon-blur {
+          animation: blur-pulse 3s ease-in-out infinite;
+        }
+      `}</style>
+      <header className="sticky top-0 z-30 glass backdrop-blur" style={{ borderBottom: "1px solid rgba(22,19,13,.10)" }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <AuctaMark size={42} />
+            <div className="leading-none">
+              <div style={serif} className="text-2xl tracking-tight text-ink">Aucta</div>
+              <div className="mt-1 text-[10px] uppercase luxe text-gold">Bid with confidence</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            {me ? (
+              <>
+                <span className="hidden text-sm text-muted sm:inline">Hi, {myName}</span>
+                <button onClick={onSignOut} className="inline-flex items-center gap-1.5 rounded-full border-hair px-3 py-2 text-sm text-muted hover:text-ink"><LogOut className="h-4 w-4" /></button>
+              </>
+            ) : (
+              <button onClick={onSignIn} className="btn-ink rounded-full px-5 py-2 text-sm font-semibold">Sign in</button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-6 py-16">
+        <div className="relative rounded-3xl overflow-hidden h-96">
+          <div className="coming-soon-blur absolute inset-0 bg-paper border-hair rounded-3xl" style={{ background: "linear-gradient(135deg, rgba(22,19,13,.08), rgba(231,199,107,.05))" }} />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
+            <div className="mb-6 flex justify-center">
+              <AuctaMark size={80} />
+            </div>
+            <h1 style={serif} className="text-5xl text-ink leading-tight mb-3">Coming Soon</h1>
+            <p className="text-lg text-muted max-w-md mb-2">Aucta is getting ready to launch.</p>
+            <p className="text-sm text-muted mb-6">We're preparing an amazing auction experience just for you.</p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "rgba(231,199,107,.15)" }}>
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gold opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-gold" /></span>
+              <span className="text-sm font-medium text-gold">Stay tuned</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
 

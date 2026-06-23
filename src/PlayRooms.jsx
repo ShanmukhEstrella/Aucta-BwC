@@ -218,12 +218,15 @@ function useAuctionVideo(roomId, me, enabled, onError) {
 function VideoThumb({ stream, muted = false, label }) {
   const ref = useRef(null);
   useEffect(() => {
-    if (ref.current) ref.current.srcObject = stream || null;
+    if (!ref.current) return;
+    if (ref.current.srcObject !== stream) {
+      ref.current.srcObject = stream || null;
+    }
   }, [stream]);
   if (!stream) return null;
   return (
     <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-gold/40 bg-black">
-      <video ref={ref} autoPlay playsInline muted={muted} className="h-full w-full object-cover" />
+      <video ref={ref} autoPlay playsInline muted={muted} className="h-full w-full object-cover" style={{ display: 'block' }} />
       {label && <span className="absolute bottom-0 left-0 right-0 bg-black/45 px-1 py-0.5 text-[8px] font-semibold text-white">{label}</span>}
     </div>
   );
@@ -599,24 +602,24 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
     <div className="rise2 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 style={serif} className="text-ink text-3xl">{room.name}</h1>
-          <button onClick={copyCode} className="mt-1 inline-flex items-center gap-2 rounded-full border-hair px-3 py-1 text-sm text-muted hover:text-ink">
-            Code <span className="font-bold tracking-widest text-ink" style={serif}>{room.code}</span>
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+          <h1 style={serif} className="text-ink text-2xl sm:text-3xl">{room.name}</h1>
+          <button onClick={copyCode} className="mt-1 inline-flex items-center gap-2 rounded-full border-hair px-2.5 py-1 sm:px-3 text-xs sm:text-sm text-muted hover:text-ink">
+            Code <span className="font-bold tracking-widest text-ink text-xs sm:text-sm" style={serif}>{room.code}</span>
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          {elapsed && <span className="inline-flex items-center rounded-full border-hair px-3 py-1.5 text-sm font-semibold tabular-nums text-ink">Elapsed {elapsed}</span>}
-          <button onClick={toggleSound} title={soundOn ? "Turn sound off" : "Turn sound on"} className={"inline-flex h-9 items-center gap-1.5 rounded-full border-hair px-3 text-sm font-semibold hover:text-ink " + (soundOn ? "text-gold" : "text-muted")}>
-            {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            {soundOn ? "Sound on" : "Sound off"}
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          {elapsed && <span className="inline-flex items-center rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold tabular-nums text-ink">Elapsed {elapsed}</span>}
+          <button onClick={toggleSound} title={soundOn ? "Turn sound off" : "Turn sound on"} className={"inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold hover:text-ink " + (soundOn ? "text-gold" : "text-muted")}>
+            {soundOn ? <Volume2 className="h-4 w-4 shrink-0" /> : <VolumeX className="h-4 w-4 shrink-0" />}
+            <span className="hidden sm:inline">{soundOn ? "Sound on" : "Sound off"}</span>
           </button>
-          {me_m && <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-white" style={{ background: franchiseColor(me_m.team_name) }}><Wallet className="h-4 w-4" /> {fmtCr(me_m.purse_remaining)}</span>}
-          <button onClick={() => setVideoEnabled((on) => !on)} className={"inline-flex items-center gap-1.5 rounded-full border-hair px-3 py-1.5 text-sm font-semibold hover:text-ink " + (videoEnabled ? "text-gold" : "text-muted")}>
-            <Video className="h-4 w-4" /> {videoEnabled ? "Video on" : "Video"}
+          {me_m && <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold text-white whitespace-nowrap" style={{ background: franchiseColor(me_m.team_name) }}><Wallet className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">{fmtCr(me_m.purse_remaining)}</span><span className="sm:hidden text-[11px]">{fmtCr(me_m.purse_remaining).slice(0, 4)}</span></span>}
+          <button onClick={() => setVideoEnabled((on) => !on)} className={"inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold hover:text-ink " + (videoEnabled ? "text-gold" : "text-muted")}>
+            <Video className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">{videoEnabled ? "Video on" : "Video"}</span>
           </button>
-          {isHost && room.status !== "done" && <button onClick={async () => { const { error } = await requestEndRoom(roomId); if (error) flash("err", error.message); }} className="inline-flex items-center gap-1.5 rounded-full border border-rose-300/70 px-3 py-1.5 text-sm font-semibold text-rose-600 hover:bg-rose-50"><StopCircle className="h-4 w-4" /> End auction</button>}
-          <button onClick={onLeave} className="inline-flex items-center gap-1.5 rounded-full border-hair px-3 py-1.5 text-sm text-muted hover:text-ink"><LogOut className="h-4 w-4" /> Leave</button>
+          {isHost && room.status !== "done" && <button onClick={async () => { const { error } = await requestEndRoom(roomId); if (error) flash("err", error.message); }} className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-rose-300/70 px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold text-rose-600 hover:bg-rose-50 whitespace-nowrap"><StopCircle className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">End</span></button>}
+          <button onClick={onLeave} className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border-hair px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-muted hover:text-ink"><LogOut className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Leave</span></button>
         </div>
       </div>
       {hasEndRequest && (
@@ -702,40 +705,40 @@ function Stage({ room, lot, me, me_m, now, onBid, onSkip, bidBusy, queuedCount, 
       </div>
 
       <div className="mt-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 style={serif} className="flex items-center gap-3 text-5xl leading-none"><CountryFlag country={lot.country} /><span>{lot.player_name}</span></h2>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <h2 style={serif} className="flex items-center gap-2 sm:gap-3 text-3xl sm:text-5xl leading-none flex-wrap"><CountryFlag country={lot.country} /><span>{lot.player_name}</span></h2>
           {stage < 3 && (
             <button onClick={onSkip} disabled={!canSkip}
               title={lot.high_bidder_id ? "Bidding has started" : iSkipped ? "You chose to skip this player" : "Vote to skip this player"}
-              className={"inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 " + (iSkipped ? "border-amber-300/50 bg-amber-300/15 text-gold" : "border-white/20 bg-white/10 text-cream hover:bg-white/15")}>
-              <SkipForward className="h-3.5 w-3.5" /> {iSkipped ? "Skipped" : "Skip"} {skipCount}/{memberCount}
+              className={"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs sm:px-3 transition disabled:cursor-not-allowed disabled:opacity-60 font-semibold " + (iSkipped ? "border-amber-300/50 bg-amber-300/15 text-gold" : "border-white/20 bg-white/10 text-cream hover:bg-white/15")}>
+              <SkipForward className="h-3.5 w-3.5 shrink-0" /> <span className="hidden sm:inline">{iSkipped ? "Skipped" : "Skip"}</span><span className="sm:hidden">{iSkipped ? "Skip" : "S"}</span> {skipCount}/{memberCount}
             </button>
           )}
-          {lot.overseas && <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-cream-dim"><Globe className="h-3 w-3" /> Overseas</span>}
+          {lot.overseas && <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-cream-dim"><Globe className="h-3 w-3 shrink-0" /> Overseas</span>}
         </div>
-        <p className="mt-3 text-sm text-cream-dim">{lot.role} · {lot.country} · base {fmtCr(lot.base_price)}{room.last_status === "skipped" ? " · skipped unsold" : ""}</p>
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-cream-dim">{lot.role} · {lot.country} · base {fmtCr(lot.base_price)}{room.last_status === "skipped" ? " · skipped unsold" : ""}</p>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="mt-6 sm:mt-8 flex flex-wrap items-end justify-between gap-3 sm:gap-4">
         <div>
-          <p className="text-[11px] uppercase luxe text-cream-dim">{lot.cur_bid != null ? "Current bid" : "No bids yet"}</p>
-          <p style={serif} className="text-5xl tabular-nums text-gold">{lot.cur_bid != null ? fmtCr(lot.cur_bid) : fmtCr(lot.base_price)}</p>
-          {lot.high_team && <span className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ background: franchiseColor(lot.high_team) }}><Crown className="h-3.5 w-3.5" /> {iLead ? "You lead" : lot.high_team}</span>}
+          <p className="text-[10px] sm:text-[11px] uppercase luxe text-cream-dim">{lot.cur_bid != null ? "Current bid" : "No bids yet"}</p>
+          <p style={serif} className="text-3xl sm:text-5xl tabular-nums text-gold leading-none">{lot.cur_bid != null ? fmtCr(lot.cur_bid) : fmtCr(lot.base_price)}</p>
+          {lot.high_team && <span className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-xs sm:text-xs font-semibold text-white whitespace-nowrap" style={{ background: franchiseColor(lot.high_team) }}><Crown className="h-3.5 w-3.5 shrink-0" /> {iLead ? "You lead" : lot.high_team}</span>}
         </div>
 
         {stage < 3 && (
-          <div className="w-full max-w-xs">
-            {iLead ? <p className="rounded-xl bg-emerald-500/15 py-3 text-center text-sm font-semibold text-emerald-300">You're the top bidder</p>
-              : blocked ? <p className="rounded-xl bg-rose-500/15 py-3 text-center text-sm font-semibold text-rose-300">{blocked}</p>
-              : overPurse ? <p className="rounded-xl bg-rose-500/15 py-3 text-center text-sm font-semibold text-rose-300">Next bid is over your purse</p>
+          <div className="w-full sm:w-auto sm:max-w-xs">
+            {iLead ? <p className="rounded-xl bg-emerald-500/15 py-2.5 sm:py-3 px-2 sm:px-3 text-center text-xs sm:text-sm font-semibold text-emerald-300">You're the top bidder</p>
+              : blocked ? <p className="rounded-xl bg-rose-500/15 py-2.5 sm:py-3 px-2 sm:px-3 text-center text-xs sm:text-sm font-semibold text-rose-300">{blocked}</p>
+              : overPurse ? <p className="rounded-xl bg-rose-500/15 py-2.5 sm:py-3 px-2 sm:px-3 text-center text-xs sm:text-sm font-semibold text-rose-300">Next bid is over your purse</p>
               : (
                 <>
                   <div className="flex gap-2">
                     <input type="number" value={amt} min={min} step={10} onChange={(e) => setAmt(Number(e.target.value))}
-                      className="w-full rounded-full border border-white/20 bg-black/20 px-4 py-2.5 text-sm tabular-nums text-cream outline-none" />
-                    <button disabled={!canBid || bidBusy} onClick={() => onBid(Math.max(min, Number(amt)))} className="btn-gold shrink-0 rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60">Bid</button>
+                      className="w-full rounded-full border border-white/20 bg-black/20 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm tabular-nums text-cream outline-none" />
+                    <button disabled={!canBid || bidBusy} onClick={() => onBid(Math.max(min, Number(amt)))} className="btn-gold shrink-0 rounded-full px-3 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-semibold disabled:opacity-60 whitespace-nowrap">Bid</button>
                   </div>
-                  <p className="mt-2 text-center text-xs text-cream-dim">Min {fmtCr(min)} · purse {fmtCr(me_m?.purse_remaining)} · squad {myCounts.squad}/{room.max_squad}</p>
+                  <p className="mt-2 text-center text-[10px] sm:text-xs text-cream-dim">Min {fmtCr(min)} · purse {fmtCr(me_m?.purse_remaining)} · squad {myCounts.squad}/{room.max_squad}</p>
                 </>
               )}
           </div>
@@ -864,9 +867,9 @@ function TeamRail({ members, lot, room, meId, sold, localStream, remoteStreams }
             </div>
 
             <button onClick={() => setOpenTeam(open ? null : m.user_id)}
-              className="mt-3 flex w-full items-center justify-between rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-ink hover:bg-stone-50">
+              className="mt-3 flex w-full items-center justify-between rounded-lg border border-stone-200 px-2.5 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold text-ink hover:bg-stone-50">
               <span>View squad</span>
-              <ChevronDown className={"h-4 w-4 transition-transform " + (open ? "rotate-180" : "")} />
+              <ChevronDown className={"h-4 w-4 transition-transform shrink-0 " + (open ? "rotate-180" : "")} />
             </button>
 
             {open && (
