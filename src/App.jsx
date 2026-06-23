@@ -171,6 +171,7 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("aucta-theme") || "dark");
   const [adminMode, setAdminMode] = useState(false);
   const [playOpen, setPlayOpen] = useState(false);
+  const [pendingPlayFromComingSoon, setPendingPlayFromComingSoon] = useState(false);
 
   const [auctions, setAuctions] = useState([]);
   const [listings, setListings] = useState([]);
@@ -205,6 +206,13 @@ export default function App() {
     setProfile(data);
   }, [me?.id]);
   useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  useEffect(() => {
+    if (me && pendingPlayFromComingSoon) {
+      setPlayOpen(true);
+      setPendingPlayFromComingSoon(false);
+    }
+  }, [me, pendingPlayFromComingSoon]);
 
   /* data */
   const loadData = useCallback(async () => {
@@ -317,7 +325,13 @@ export default function App() {
             onSell={() => (me ? setSellOpen(true) : signIn())}
             onJoin={join} onBid={bid} onToggleWatch={toggleWatch} onDismiss={dismiss} onDismissAll={dismissAll}
             isNonAdmin={!isAdmin} />
-          {!isAdmin && <ComingSoonOverlay me={me} onSignIn={signIn} onSignOut={signOut} />}
+          {!isAdmin && <ComingSoonOverlay me={me} onSignIn={signIn} onSignOut={signOut} onPlay={() => {
+            if (me) setPlayOpen(true);
+            else {
+              setPendingPlayFromComingSoon(true);
+              signIn();
+            }
+          }} />}
         </>
       )}
 
@@ -484,7 +498,7 @@ function HowItWorks({ defaultOpen = false }) {
   );
 }
 
-function ComingSoonOverlay({ me, onSignIn, onSignOut }) {
+function ComingSoonOverlay({ me, onSignIn, onSignOut, onPlay }) {
   return (
     <>
       <style>{`
@@ -541,12 +555,17 @@ function ComingSoonOverlay({ me, onSignIn, onSignOut }) {
             <h1 style={serif} className="text-6xl font-light text-ink leading-tight mb-4">Coming Soon</h1>
             <p className="text-xl text-muted mb-3 font-light">Aucta is getting ready to launch</p>
             <p className="text-sm text-muted mb-8">We're preparing an amazing auction experience just for you.</p>
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full" style={{ background: "rgba(231,199,107,.2)", border: "1px solid rgba(194,161,78,.4)" }}>
-              <span className="coming-soon-badge relative flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gold opacity-75" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-gold" />
-              </span>
-              <span className="text-base font-semibold text-gold">Stay tuned!</span>
+            <div className="flex flex-col items-center gap-4">
+              <button onClick={onPlay} className="btn-gold rounded-full px-8 py-3 text-base font-semibold inline-flex items-center gap-2">
+                <Trophy className="h-5 w-5" /> Play with friends
+              </button>
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full" style={{ background: "rgba(231,199,107,.2)", border: "1px solid rgba(194,161,78,.4)" }}>
+                <span className="coming-soon-badge relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gold opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-gold" />
+                </span>
+                <span className="text-base font-semibold text-gold">Main auctions coming soon</span>
+              </div>
             </div>
           </div>
         </div>
