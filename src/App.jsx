@@ -550,8 +550,8 @@ function ComingSoonOverlay({ me, onSignIn, onSignOut, onPlay }) {
             <AuctaMark size={100} />
           </div>
           <div className="glass-card rounded-3xl px-12 py-10 max-w-2xl">
-            <h1 style={serif} className="text-6xl font-light text-ink leading-tight mb-4">Coming Soon</h1>
-            <p className="text-xl text-muted mb-3 font-light">Aucta is getting ready to launch</p>
+            <h1 style={serif} className="text-6xl font-light text-ink leading-tight mb-4">Coming Soon!!</h1>
+            <p className="text-xl text-muted mb-3 font-light">Aucta is getting ready to launch!!</p>
             <p className="text-sm text-muted mb-8">We're preparing an amazing auction experience just for you.</p>
             <div className="flex flex-col items-center gap-4">
               <button onClick={onPlay} className="btn-gold rounded-full px-8 py-3 text-base font-semibold inline-flex items-center gap-2">
