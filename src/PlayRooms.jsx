@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Trophy, Users, Copy, Check, LogOut, Sun, Moon, Plus, Wallet, ChevronLeft, Crown,
-  Volume2, VolumeX, ChevronDown, Globe, ShieldCheck, StopCircle, CheckCircle2, Bell, SkipForward, Video,
+  Volume2, VolumeX, ChevronDown, Globe, ShieldCheck, StopCircle, CheckCircle2, Bell, SkipForward, Video, BookOpen, X,
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import {
@@ -469,6 +469,7 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
   const [bidBusy, setBidBusy] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const reloadT = useRef(null);
   const prevStage = useRef(0);
   const lastTick = useRef(null);
@@ -608,6 +609,7 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}
           </button>
         </div>
+        <button onClick={() => setShowRules(true)} className="inline-flex items-center gap-2 rounded-full border-hair px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold text-gold hover:text-ink transition bg-gold/10 border-gold/30"><BookOpen className="h-4 w-4 sm:h-5 sm:w-5" /> Rules</button>
         <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
           {elapsed && <span className="inline-flex items-center rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold tabular-nums text-ink">Elapsed <span className="sm:hidden ml-1">{elapsed}</span><span className="hidden sm:inline ml-1.5">{elapsed}</span></span>}
           <button onClick={toggleSound} title={soundOn ? "Turn sound off" : "Turn sound on"} className={"inline-flex items-center gap-0.5 sm:gap-1.5 rounded-full border-hair px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-semibold hover:text-ink " + (soundOn ? "text-gold" : "text-muted")}>
@@ -638,6 +640,7 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
         </div>
         <TeamRail members={members} lot={lot} room={room} meId={me.id} sold={sold} localStream={localStream} remoteStreams={remoteStreams} />
       </div>
+      {showRules && <RulesModal room={room} onClose={() => setShowRules(false)} />}
     </div>
   );
 }
@@ -1072,6 +1075,91 @@ function Results({ room, members, lots }) {
           ) : <p className="mt-3 text-sm text-muted">No players bought.</p>}
         </div>
       ))}
+    </div>
+  );
+}
+
+function RulesModal({ room, onClose }) {
+  const rules = [
+    {
+      title: "Player Pool & Sets",
+      icon: "🎯",
+      content: `Players are organized into ${SET_ORDER.length} distinct sets that come up in order: ${SET_ORDER.join(" → ")}. Each set includes players from different roles and tiers. The auctioneer presents players sequentially within their sets.`
+    },
+    {
+      title: "Squad Requirements",
+      icon: "👥",
+      content: `Each team must have: Minimum ${room.min_squad} players · Maximum ${room.max_squad} players · At most ${room.max_overseas} overseas players. You won't be allowed to bid if these constraints would be violated.`
+    },
+    {
+      title: "Auction Stages",
+      icon: "🔨",
+      content: `1. Open: First bid can come in. 2. Going once: 3-second call period. 3. Going twice: Final 3-second call. 4. Sold/Unsold: Player status finalized. Bid anytime during "Open" stage to take the lead.`
+    },
+    {
+      title: "Skip Rule",
+      icon: "⏭️",
+      content: `During the Open stage (before any bid), vote to skip the current player. All members must unanimously agree to skip. A skipped player goes to Unsold and you move to the next lot.`
+    },
+    {
+      title: "Bidding & Purse",
+      icon: "💰",
+      content: `You start with a purse (pool of money) to spend. Each bid deducts the full amount. You can't bid more than your remaining purse. Once you win a player, their bid amount is locked in your spent total.`
+    },
+    {
+      title: "Winning a Lot",
+      icon: "🏆",
+      content: `You automatically win when the auctioneer calls "Sold" after no new bids during Going twice. You must have purse remaining and squad slots available. Oversold or squad-full players can't be won.`
+    },
+    {
+      title: "Host Controls",
+      icon: "⚙️",
+      content: `The host (room creator) can request to end the auction early. All teams must agree to end. Once ended, results are finalized and no more bids are accepted.`
+    },
+    {
+      title: "Sound & Accessibility",
+      icon: "🔊",
+      content: `Toggle sound on/off to control auctioneer calls and bidding alerts. Sound helps you stay in sync with the auction pacing and stage transitions.`
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0, 0, 0, 0.6)" }} onClick={onClose}>
+      <div className="w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl"
+        style={{ background: "linear-gradient(135deg, rgba(28, 26, 19, 0.98), rgba(15, 13, 9, 0.98))", border: "2px solid #DcBd6a" }}
+        onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gold/30">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "rgba(220, 189, 106, 0.15)" }}>
+              <BookOpen className="h-5 w-5 text-gold" />
+            </div>
+            <h2 style={serif} className="text-3xl text-gold">Auction Rules</h2>
+          </div>
+          <button onClick={onClose} className="rounded-full p-1 text-cream hover:text-gold transition">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-6 space-y-4">
+          {rules.map((rule, idx) => (
+            <div key={idx} className="rounded-xl p-4" style={{ background: "rgba(220, 189, 106, 0.08)", border: "1px solid rgba(220, 189, 106, 0.2)" }}>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl shrink-0">{rule.icon}</span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold text-gold">{rule.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-cream-dim">{rule.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-gold/30 px-6 py-4 bg-black/20">
+          <p className="text-center text-xs text-cream-dim">
+            <span className="text-gold font-semibold">Pro tip:</span> Keep track of purse remaining and squad slots. Plan your bids wisely!
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
