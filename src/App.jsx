@@ -533,17 +533,15 @@ function ComingSoonOverlay({ me, onSignIn, onSignOut, onPlay }) {
           animation: shimmer 2s ease-in-out infinite;
         }
         .glass-card {
-          background: rgba(255, 253, 247, 0.95);
+          background: rgba(255, 255, 255, 0.98);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 253, 247, 0.5);
-          box-shadow: 0 8px 32px rgba(22, 19, 13, 0.2),
-                      0 0 0 1px rgba(255, 253, 247, 0.1) inset;
+          border: 2px solid #DcBd6a;
+          box-shadow: 0 8px 32px rgba(22, 19, 13, 0.15);
         }
-        .glass-card[data-theme="dark"] {
-          background: rgba(28, 26, 19, 0.95);
-          border: 1px solid rgba(243, 238, 226, 0.2);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
-                      0 0 0 1px rgba(243, 238, 226, 0.1) inset;
+        .app-root[data-theme="dark"] .glass-card {
+          background: rgba(15, 13, 9, 0.98);
+          border: 2px solid #DcBd6a;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
       `}</style>
       <div className="coming-soon-overlay">
