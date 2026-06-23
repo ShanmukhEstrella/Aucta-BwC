@@ -306,17 +306,19 @@ export default function App() {
           onToggleTheme={toggleTheme} onExit={() => setAdminMode(false)} onSignOut={signOut}
           onApprove={approve} onReject={reject} onReturn={returnToReview} onMove={moveItem}
           onStatus={setStatus} onCreate={createAuction} onReschedule={reschedule} onDelete={del} onDeleteAll={delAll} />
-      ) : isAdmin ? (
-        <Storefront me={me} profile={profile} listings={listings} auctions={auctions} notifs={notifs}
-          watchSet={watchSet} joinedSet={joinedSet} bidSet={bidSet}
-          now={now} theme={theme} ready={ready} isAdmin={isAdmin}
-          onToggleTheme={toggleTheme} onEnterAdmin={() => setAdminMode(true)}
-          onPlay={() => (me ? setPlayOpen(true) : signIn())}
-          onSignIn={signIn} onSignOut={signOut}
-          onSell={() => (me ? setSellOpen(true) : signIn())}
-          onJoin={join} onBid={bid} onToggleWatch={toggleWatch} onDismiss={dismiss} onDismissAll={dismissAll} />
       ) : (
-        <ComingSoon theme={theme} onToggleTheme={toggleTheme} onSignIn={signIn} onSignOut={signOut} me={me} />
+        <>
+          <Storefront me={me} profile={profile} listings={listings} auctions={auctions} notifs={notifs}
+            watchSet={watchSet} joinedSet={joinedSet} bidSet={bidSet}
+            now={now} theme={theme} ready={ready} isAdmin={isAdmin}
+            onToggleTheme={toggleTheme} onEnterAdmin={() => setAdminMode(true)}
+            onPlay={() => (me ? setPlayOpen(true) : signIn())}
+            onSignIn={signIn} onSignOut={signOut}
+            onSell={() => (me ? setSellOpen(true) : signIn())}
+            onJoin={join} onBid={bid} onToggleWatch={toggleWatch} onDismiss={dismiss} onDismissAll={dismissAll}
+            isNonAdmin={!isAdmin} />
+          {!isAdmin && <ComingSoonOverlay me={me} onSignIn={signIn} onSignOut={signOut} />}
+        </>
       )}
 
       {me && profile && !profile.onboarded && (
@@ -344,7 +346,7 @@ export default function App() {
 /* ============================== storefront ============================== */
 function Storefront(p) {
   const { me, profile, listings, auctions, notifs, watchSet, joinedSet, bidSet, now, theme, ready, isAdmin,
-    onToggleTheme, onEnterAdmin, onPlay, onSignIn, onSignOut, onSell, onJoin, onBid, onToggleWatch, onDismiss, onDismissAll } = p;
+    onToggleTheme, onEnterAdmin, onPlay, onSignIn, onSignOut, onSell, onJoin, onBid, onToggleWatch, onDismiss, onDismissAll, isNonAdmin } = p;
   const [view, setView] = useState("browse");
   const myName = (profile && profile.display_name) || (me ? who(me.email) : "");
 
@@ -389,7 +391,8 @@ function Storefront(p) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className={isNonAdmin ? "opacity-40 pointer-events-none" : ""} style={isNonAdmin ? { filter: "blur(4px)" } : {}}>
+        <div className="mx-auto max-w-6xl px-6 py-10">
         {!ready ? (
           <p className="text-muted">Loading the auction room…</p>
         ) : (
@@ -435,6 +438,7 @@ function Storefront(p) {
             )}
           </>
         )}
+        </div>
       </main>
     </>
   );
@@ -480,59 +484,73 @@ function HowItWorks({ defaultOpen = false }) {
   );
 }
 
-function ComingSoon({ theme, onToggleTheme, onSignIn, onSignOut, me }) {
-  const myName = me ? who(me.email) : "";
+function ComingSoonOverlay({ me, onSignIn, onSignOut }) {
   return (
     <>
       <style>{`
-        @keyframes blur-pulse {
-          0%, 100% { filter: blur(8px); opacity: 0.6; }
-          50% { filter: blur(12px); opacity: 0.7; }
+        @keyframes glass-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
         }
-        .coming-soon-blur {
-          animation: blur-pulse 3s ease-in-out infinite;
+        @keyframes shimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+        .coming-soon-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 40;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(8px);
+          background: radial-gradient(circle at 30% 50%, rgba(194,161,78,.08), transparent 50%),
+                      linear-gradient(180deg, rgba(22,19,13,.4), rgba(22,19,13,.5));
+          pointer-events: none;
+        }
+        .coming-soon-content {
+          pointer-events: auto;
+          animation: glass-float 4s ease-in-out infinite;
+        }
+        .coming-soon-badge {
+          animation: shimmer 2s ease-in-out infinite;
+        }
+        .glass-card {
+          background: rgba(255, 253, 247, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 253, 247, 0.5);
+          box-shadow: 0 8px 32px rgba(22, 19, 13, 0.2),
+                      0 0 0 1px rgba(255, 253, 247, 0.1) inset;
+        }
+        .glass-card[data-theme="dark"] {
+          background: rgba(28, 26, 19, 0.95);
+          border: 1px solid rgba(243, 238, 226, 0.2);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+                      0 0 0 1px rgba(243, 238, 226, 0.1) inset;
         }
       `}</style>
-      <header className="sticky top-0 z-30 glass backdrop-blur" style={{ borderBottom: "1px solid rgba(22,19,13,.10)" }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <AuctaMark size={42} />
-            <div className="leading-none">
-              <div style={serif} className="text-2xl tracking-tight text-ink">Aucta</div>
-              <div className="mt-1 text-[10px] uppercase luxe text-gold">Bid with confidence</div>
-            </div>
+      <div className="coming-soon-overlay">
+        <div className="coming-soon-content text-center">
+          <div className="mb-8 flex justify-center">
+            <AuctaMark size={100} />
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-            {me ? (
-              <>
-                <span className="hidden text-sm text-muted sm:inline">Hi, {myName}</span>
-                <button onClick={onSignOut} className="inline-flex items-center gap-1.5 rounded-full border-hair px-3 py-2 text-sm text-muted hover:text-ink"><LogOut className="h-4 w-4" /></button>
-              </>
-            ) : (
-              <button onClick={onSignIn} className="btn-ink rounded-full px-5 py-2 text-sm font-semibold">Sign in</button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-16">
-        <div className="relative rounded-3xl overflow-hidden h-96">
-          <div className="coming-soon-blur absolute inset-0 bg-paper border-hair rounded-3xl" style={{ background: "linear-gradient(135deg, rgba(22,19,13,.08), rgba(231,199,107,.05))" }} />
-          <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
-            <div className="mb-6 flex justify-center">
-              <AuctaMark size={80} />
-            </div>
-            <h1 style={serif} className="text-5xl text-ink leading-tight mb-3">Coming Soon</h1>
-            <p className="text-lg text-muted max-w-md mb-2">Aucta is getting ready to launch.</p>
-            <p className="text-sm text-muted mb-6">We're preparing an amazing auction experience just for you.</p>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "rgba(231,199,107,.15)" }}>
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gold opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-gold" /></span>
-              <span className="text-sm font-medium text-gold">Stay tuned</span>
+          <div className="glass-card rounded-3xl px-12 py-10 max-w-2xl">
+            <h1 style={serif} className="text-6xl font-light text-ink leading-tight mb-4">Coming Soon</h1>
+            <p className="text-xl text-muted mb-3 font-light">Aucta is getting ready to launch</p>
+            <p className="text-sm text-muted mb-8">We're preparing an amazing auction experience just for you.</p>
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full" style={{ background: "rgba(231,199,107,.2)", border: "1px solid rgba(194,161,78,.4)" }}>
+              <span className="coming-soon-badge relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gold opacity-75" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-gold" />
+              </span>
+              <span className="text-base font-semibold text-gold">Stay tuned!</span>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }
