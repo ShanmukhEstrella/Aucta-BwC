@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Trophy, Users, Copy, Check, LogOut, Sun, Moon, Plus, Wallet, ChevronLeft, Crown,
   Volume2, VolumeX, ChevronDown, Globe, ShieldCheck, StopCircle, CheckCircle2, Bell, SkipForward, Video, BookOpen, X,
+  Grid3x3, Clock, Settings, Volume, Gavel, Zap,
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import {
@@ -470,6 +471,9 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
   const [soundOn, setSoundOn] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showRulesBeforeStart, setShowRulesBeforeStart] = useState(false);
+  const [readyIds, setReadyIds] = useState(new Set());
+  const readyChannelRef = useRef(null);
   const reloadT = useRef(null);
   const prevStage = useRef(0);
   const lastTick = useRef(null);
@@ -498,9 +502,23 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: "id=eq." + roomId }, scheduleReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "room_members", filter: "room_id=eq." + roomId }, scheduleReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "room_lots", filter: "room_id=eq." + roomId }, scheduleReload)
+      .on("broadcast", { event: "player-ready" }, ({ payload }) => {
+        if (payload?.user_id) setReadyIds((ids) => new Set([...ids, payload.user_id]));
+      })
       .subscribe();
+    readyChannelRef.current = ch;
     return () => supabase.removeChannel(ch);
   }, [roomId, scheduleReload]);
+
+  useEffect(() => {
+    if (showRulesBeforeStart && readyIds.size === members.length && members.length > 0) {
+      SFX.enable();
+      SFX.start();
+      startRoom(roomId).then(load).catch(() => flash("err", "Failed to start auction"));
+      setShowRulesBeforeStart(false);
+      setReadyIds(new Set());
+    }
+  }, [showRulesBeforeStart, readyIds, members.length, roomId, load]);
 
   useEffect(() => {
     if (soundOn) SFX.enable();
@@ -631,7 +649,19 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,.9fr)]">
         <div>
-          {room.status === "lobby" && <Lobbyview room={room} members={members} isHost={isHost} lots={lots} onStart={async () => { SFX.enable(); SFX.start(); const { error } = await startRoom(roomId); if (error) flash("err", error.message); }} onCopy={copyCode} copied={copied} />}
+          {room.status === "lobby" && (
+            <Lobbyview
+              room={room}
+              members={members}
+              isHost={isHost}
+              lots={lots}
+              onStart={() => setShowRulesBeforeStart(true)}
+              onCopy={copyCode}
+              copied={copied}
+              showRulesBeforeStart={showRulesBeforeStart}
+              readyIds={readyIds}
+            />
+          )}
           {room.status === "running" && <Stage room={room} lot={lot} me={me} me_m={me_m} now={now} bidBusy={bidBusy} myCounts={myCounts} setBanner={setBanner}
             skipCount={skipCount} memberCount={members.length} iSkipped={iSkipped}
             onSkip={async () => { SFX.enable(); const { error } = await skipRoomLot(roomId, lot.id); if (error) flash("err", error.message); }}
@@ -640,7 +670,20 @@ function AuctionRoom({ me, roomId, onLeave, flash }) {
         </div>
         <TeamRail members={members} lot={lot} room={room} meId={me.id} sold={sold} localStream={localStream} remoteStreams={remoteStreams} />
       </div>
-      {showRules && <RulesModal room={room} onClose={() => setShowRules(false)} />}
+      {showRules && !showRulesBeforeStart && <RulesModal room={room} onClose={() => setShowRules(false)} readyCount={readyIds.size} memberCount={members.length} showReady={false} />}
+      {showRulesBeforeStart && (
+        <RulesModal
+          room={room}
+          onClose={() => {}}
+          onReady={() => {
+            readyChannelRef.current?.send({ type: "broadcast", event: "player-ready", payload: { user_id: me.id } });
+            setReadyIds((ids) => new Set([...ids, me.id]));
+          }}
+          readyCount={readyIds.size}
+          memberCount={members.length}
+          showReady={true}
+        />
+      )}
     </div>
   );
 }
@@ -1079,46 +1122,46 @@ function Results({ room, members, lots }) {
   );
 }
 
-function RulesModal({ room, onClose }) {
+function RulesModal({ room, onClose, onReady, readyCount, memberCount, showReady = false }) {
   const rules = [
     {
       title: "Player Pool & Sets",
-      icon: "🎯",
+      icon: <Grid3x3 className="h-5 w-5" />,
       content: `Players are organized into ${SET_ORDER.length} distinct sets that come up in order: ${SET_ORDER.join(" → ")}. Each set includes players from different roles and tiers. The auctioneer presents players sequentially within their sets.`
     },
     {
       title: "Squad Requirements",
-      icon: "👥",
+      icon: <Users className="h-5 w-5" />,
       content: `Each team must have: Minimum ${room.min_squad} players · Maximum ${room.max_squad} players · At most ${room.max_overseas} overseas players. You won't be allowed to bid if these constraints would be violated.`
     },
     {
       title: "Auction Stages",
-      icon: "🔨",
+      icon: <Gavel className="h-5 w-5" />,
       content: `1. Open: First bid can come in. 2. Going once: 3-second call period. 3. Going twice: Final 3-second call. 4. Sold/Unsold: Player status finalized. Bid anytime during "Open" stage to take the lead.`
     },
     {
       title: "Skip Rule",
-      icon: "⏭️",
+      icon: <SkipForward className="h-5 w-5" />,
       content: `During the Open stage (before any bid), vote to skip the current player. All members must unanimously agree to skip. A skipped player goes to Unsold and you move to the next lot.`
     },
     {
       title: "Bidding & Purse",
-      icon: "💰",
+      icon: <Wallet className="h-5 w-5" />,
       content: `You start with a purse (pool of money) to spend. Each bid deducts the full amount. You can't bid more than your remaining purse. Once you win a player, their bid amount is locked in your spent total.`
     },
     {
       title: "Winning a Lot",
-      icon: "🏆",
+      icon: <Trophy className="h-5 w-5" />,
       content: `You automatically win when the auctioneer calls "Sold" after no new bids during Going twice. You must have purse remaining and squad slots available. Oversold or squad-full players can't be won.`
     },
     {
       title: "Host Controls",
-      icon: "⚙️",
+      icon: <Settings className="h-5 w-5" />,
       content: `The host (room creator) can request to end the auction early. All teams must agree to end. Once ended, results are finalized and no more bids are accepted.`
     },
     {
       title: "Sound & Accessibility",
-      icon: "🔊",
+      icon: <Volume2 className="h-5 w-5" />,
       content: `Toggle sound on/off to control auctioneer calls and bidding alerts. Sound helps you stay in sync with the auction pacing and stage transitions.`
     },
   ];
@@ -1133,18 +1176,21 @@ function RulesModal({ room, onClose }) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "rgba(220, 189, 106, 0.15)" }}>
               <BookOpen className="h-5 w-5 text-gold" />
             </div>
-            <h2 style={serif} className="text-3xl text-gold">Auction Rules</h2>
+            <div>
+              <h2 style={serif} className="text-3xl text-gold">Auction Rules</h2>
+              {showReady && memberCount && <p className="mt-1 text-sm text-cream-dim">{readyCount}/{memberCount} teams ready</p>}
+            </div>
           </div>
           <button onClick={onClose} className="rounded-full p-1 text-cream hover:text-gold transition">
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-6 space-y-4">
+        <div className="max-h-[60vh] overflow-y-auto px-6 py-6 space-y-4">
           {rules.map((rule, idx) => (
             <div key={idx} className="rounded-xl p-4" style={{ background: "rgba(220, 189, 106, 0.08)", border: "1px solid rgba(220, 189, 106, 0.2)" }}>
               <div className="flex items-start gap-3">
-                <span className="text-2xl shrink-0">{rule.icon}</span>
+                <div className="h-5 w-5 text-gold shrink-0 mt-0.5">{rule.icon}</div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-lg font-semibold text-gold">{rule.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-cream-dim">{rule.content}</p>
@@ -1154,10 +1200,13 @@ function RulesModal({ room, onClose }) {
           ))}
         </div>
 
-        <div className="border-t border-gold/30 px-6 py-4 bg-black/20">
-          <p className="text-center text-xs text-cream-dim">
+        <div className="border-t border-gold/30 px-6 py-4 bg-black/20 flex items-center justify-between">
+          <p className="text-xs text-cream-dim">
             <span className="text-gold font-semibold">Pro tip:</span> Keep track of purse remaining and squad slots. Plan your bids wisely!
           </p>
+          {showReady && onReady && (
+            <button onClick={onReady} className="btn-gold rounded-full px-6 py-2.5 text-sm font-semibold whitespace-nowrap ml-4">Ready</button>
+          )}
         </div>
       </div>
     </div>
