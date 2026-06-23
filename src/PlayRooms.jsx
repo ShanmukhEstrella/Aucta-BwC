@@ -1127,7 +1127,12 @@ function RulesModal({ room, onClose, onReady, readyCount, memberCount, showReady
     {
       title: "Player Pool & Sets",
       icon: <Grid3x3 className="h-5 w-5" />,
-      content: `Players are organized into ${SET_ORDER.length} distinct sets that come up in order: ${SET_ORDER.join(" → ")}. Each set includes players from different roles and tiers. The auctioneer presents players sequentially within their sets.`
+      content: `Players are organized into ${SET_ORDER.length} distinct sets that come up in order: ${SET_ORDER.join(" → ")}. Each set contains exactly 10 players from different roles and tiers. Once all sets are auctioned (${SET_ORDER.length * 10} players total), the set order repeats from the beginning, cycling through another 10 players per set until all players are sold.`
+    },
+    {
+      title: "Set Progression",
+      icon: <Zap className="h-5 w-5" />,
+      content: `The auction follows a strict set cycle: After completing one full round of all sets (10 players × ${SET_ORDER.length} sets), the auctioneer moves to the next cycle with the same set order. This ensures balanced bidding opportunities across all player categories throughout the auction.`
     },
     {
       title: "Squad Requirements",
